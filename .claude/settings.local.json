@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(\"C:/Users/ismail.orhan/Documents/Apps/Service Officer/debug_mmc.py\":*)",
+      "Bash(python:*)",
+      "Bash(py debug_mmc.py:*)",
+      "Bash(py -c:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /F /IM pythonw.exe\")",
+      "Bash(cmd /c \"tasklist | findstr pythonw\")",
+      "Bash(cmd /c \"tasklist | findstr /i python\")",
+      "Bash(cmd /c \"py -m pip install pyinstaller\")",
+      "Bash(cmd /c \"py -m PyInstaller --version\")",
+      "Bash(cmd /c \"py -m PyInstaller --version 2>&1\")",
+      "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\ismail.orhan\\\\Documents\\\\Apps\\\\Service Officer\"\" && py -m PyInstaller --version && py -m PyInstaller --onefile --noconsole --name ServiceOfficer service_officer.py 2>&1 | tail -30\")",
+      "Bash(cmd /c \"cd /d \"\"C:\\\\Users\\\\ismail.orhan\\\\Documents\\\\Apps\\\\Service Officer\"\" && py -m PyInstaller --version\")",
+      "Bash(cmd /c \"py -c \"\"import PyInstaller; print\\(PyInstaller.__version__\\)\"\"\")",
+      "Bash(cmd /c \"C:\\\\Users\\\\ismail.orhan\\\\AppData\\\\Local\\\\Python\\\\pythoncore-3.14-64\\\\python.exe -m pip install pyinstaller 2>&1\")",
+      "Bash(cmd /c \"where py & py --version\")",
+      "Bash(cmd /c \"py -c \"\"import sys; print\\(sys.executable\\)\"\"\")",
+      "Bash(py:*)",
+      "Bash(py -m PyInstaller:*)",
+      "Bash(copy /Y \"C:\\\\Users\\\\ismail.orhan\\\\Documents\\\\Apps\\\\Service Officer\\\\dist\\\\ServiceOfficer.exe\" \"C:\\\\Users\\\\ismail.orhan\\\\Documents\\\\Apps\\\\Service Officer\\\\ServiceOfficer.exe\")",
+      "Bash(cd:*)",
+      "Bash(timeout:*)",
+      "Bash(findstr:*)",
+      "Bash(pip show pyinstaller)",
+      "Bash(pip install pyinstaller)",
+      "Bash(pyinstaller --onefile --noconsole --name WeekNumber week_number.py)",
+      "Bash(pip show pillow)",
+      "Bash(pip install Pillow)",
+      "Bash(pip show Pillow)",
+      "Bash(pip install pystray)",
+      "Bash(pip show pystray)",
+      "Bash(ie4uinit.exe -show)",
+      "Bash(del /f /q \"%localappdata%\\\\IconCache.db\")",
+      "Bash(del /f /q \"%localappdata%\\\\Microsoft\\\\Windows\\\\Explorer\\\\iconcache*\")",
+      "Bash(start explorer.exe)"
+    ]
+  }
+}

@@ -10,7 +10,7 @@
 
 #define MyAppName        "WeekNumber"
 #define MyAppVersion     "1.0.0"
-#define MyAppPublisher   "WeekNumber"
+#define MyAppPublisher   "ismailorhan"
 #define MyAppExeName     "WeekNumber.exe"
 #define MyAppId          "{{C3E4A5B6-7D8F-49A1-B2C3-D4E5F6A7B8C9}}"
 

@@ -10,9 +10,13 @@ import datetime
 import threading
 import time
 import tkinter as tk
+from tkinter import messagebox
 
 from PIL import Image, ImageDraw, ImageFont
 import pystray
+
+import autostart
+import config
 
 
 # ── Calendar colour palette (Catppuccin Mocha) ───────────────────────────────
@@ -330,9 +334,26 @@ def main() -> None:
     week_n    = today.isocalendar()[1]
     info_text = f"Week {week_n} of {today.year}  |  {today.strftime('%A, %d %b %Y')}"
 
+    def toggle_autostart(icon_arg=None, item=None):
+        new_state = not config.load_auto_start()
+        config.save_auto_start(new_state)
+        try:
+            autostart.apply(new_state)
+        except Exception as exc:
+            messagebox.showwarning(
+                "WeekNumber",
+                f"Otomatik başlatma uygulanamadı:\n{exc}",
+            )
+
     icon.menu = pystray.Menu(
         pystray.MenuItem("Show Calendar", toggle_calendar, default=True),
         pystray.MenuItem(info_text, None, enabled=False),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem(
+            "Windows başladığında başlat",
+            toggle_autostart,
+            checked=lambda item: config.load_auto_start(),
+        ),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit", quit_app),
     )

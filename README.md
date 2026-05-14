@@ -18,7 +18,14 @@ A minimal Windows system tray app that shows the current ISO week number as the 
 
 - Windows 10 / 11
 
-## Run (from source)
+## Install (end users)
+
+Run `dist\WeekNumberSetup.exe`. The wizard offers an optional
+"start automatically when Windows starts" task (checked by default) and a
+desktop-shortcut task (off by default). Auto-start can be toggled later from
+the tray icon's right-click menu (**Windows başladığında başlat**).
+
+## Run (from source — dev)
 
 ```bash
 pip install -r requirements.txt
@@ -27,9 +34,20 @@ pythonw week_number.py
 
 ## Build EXE
 
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name WeekNumber --icon=app_icon.ico week_number.py
+```bat
+build.bat
 ```
 
-Output: `dist\WeekNumber.exe` — no installation needed, runs standalone.
+Produces `dist\WeekNumber.exe` via PyInstaller with the admin manifest
+embedded (`--uac-admin`).
+
+## Build Installer
+
+1. Run `build.bat` to produce `dist\WeekNumber.exe`.
+2. Open `installer.iss` in Inno Setup Compiler (or run `iscc installer.iss`).
+3. Output: `dist\WeekNumberSetup.exe`.
+
+## Configuration
+
+The auto-start preference is stored at
+`%APPDATA%\WeekNumber\config.json`.

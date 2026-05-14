@@ -59,7 +59,7 @@ Name: "{commondesktop}\{#MyAppName}";    Filename: "{app}\{#MyAppExeName}"; Icon
 Name: "{userstartup}\{#MyAppName}";      Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: autostart
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: shellexec nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: files; Name: "{userstartup}\{#MyAppName}.lnk"

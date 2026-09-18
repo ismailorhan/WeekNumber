@@ -1,0 +1,84 @@
+name: Release
+
+# Build the exe + installer and publish a GitHub Release whenever a version
+# tag (e.g. v1.1.0) is pushed. Can also be run manually from the Actions tab,
+# which makes a manual run a check that the build and the installer are
+# healthy rather than a red job complaining that a release needs a tag.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        # Tags only reach `stamp_version.py` through GITHUB_REF_NAME, but the
+        # commit it stamps has to be a real one, so no shallow surprises.
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # requirements-dev.txt, not requirements.txt: the test step needs pytest.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      # Before the build, not after. A release that ships a broken app is
+      # worse than one that does not ship.
+      #
+      # -rA prints the reason whatever happens, and there is no second -q:
+      # pytest.ini sets it already, and passing it twice is what made a
+      # ShooApp release fail with every test passing, no summary and exit 1.
+      - name: Run tests
+        run: python -m pytest tests -rA --tb=long
+
+      # Writes the commit and build date into version.py and the version
+      # resource the exe carries, and fails the build if the tag,
+      # installer.iss and version.py disagree about the release.
+      - name: Stamp the build
+        run: python stamp_version.py
+
+      # One-file is deliberate here where ShooApp is one-dir: this app is a
+      # few MB, so the unpack at launch is not noticeable, and a single exe is
+      # what the installer copies.
+      - name: Build WeekNumber.exe
+        run: >
+          python -m PyInstaller
+          --noconfirm --clean --onefile --windowed
+          --name WeekNumber --icon=app_icon.ico
+          --version-file=version_info.txt
+          --hidden-import=win32com
+          --hidden-import=win32com.client
+          --hidden-import=pywintypes
+          week_number.py
+
+      # Back to what git has, before ISCC reads the tree. The stamp is already
+      # inside the exe by now; the file it came from is not part of the
+      # installer.
+      - name: Restore version.py
+        run: python stamp_version.py --restore
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss'
+
+      # Only on a tag; see the note at the top.
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: WeekNumber ${{ github.ref_name }}
+          files: dist/WeekNumberSetup.exe
+          generate_release_notes: true

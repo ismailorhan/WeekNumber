@@ -7,5 +7,11 @@ __pycache__/
 # Build output — produced by build.bat, repackaged by installer.iss
 WeekNumber.exe
 
+# Generated at build time by stamp_version.py — never committed, so neither
+# becomes another place the version is spelled.
+installer-version.txt
+version_info.txt
+.build-number
+
 # Claude Code internals
 .claude/

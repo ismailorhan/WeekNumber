@@ -17,6 +17,7 @@ import pystray
 
 import autostart
 import config
+import version
 
 
 # ── Calendar colour palette (Catppuccin Mocha) ───────────────────────────────
@@ -35,8 +36,19 @@ _SEP_COL     = "#313244"
 
 # ── Tray icon helpers ─────────────────────────────────────────────────────────
 
+def today() -> datetime.date:
+    """What day it is. The one place anything asks, so a test can answer.
+
+    Everything below goes through this rather than calling
+    `datetime.date.today()` itself: the interesting cases are the days nobody
+    can wait for -- the ones where the ISO week does not match the calendar
+    year, and the midnight the app has to notice.
+    """
+    return datetime.date.today()
+
+
 def get_week_number() -> int:
-    return datetime.date.today().isocalendar()[1]
+    return today().isocalendar()[1]
 
 
 def create_icon_image(week: int) -> Image.Image:
@@ -80,28 +92,46 @@ def create_icon_image(week: int) -> Image.Image:
 
 
 def build_tooltip() -> str:
-    today = datetime.date.today()
-    iso = today.isocalendar()
-    day_of_year = today.timetuple().tm_yday
+    day = today()
+    iso = day.isocalendar()
+    day_of_year = day.timetuple().tm_yday
     return (
-        f"{today.strftime('%d/%m/%Y')}\n"
+        f"{day.strftime('%d/%m/%Y')}\n"
         f"Day {day_of_year} of year\n"
         f"Week {iso[1]} of year"
     )
 
 
+def info_line() -> str:
+    """The date the right-click menu shows.
+
+    A function rather than a string, and that is the whole point: it used to
+    be computed once in `main` and handed to pystray as a fixed label. The
+    icon and the tooltip were refreshed when the day changed and this was not,
+    so a machine left on overnight opened its menu on yesterday -- which is
+    the one thing this app is for.
+    """
+    day = today()
+    return (f"Week {day.isocalendar()[1]} of {day.year}"
+            f"  |  {day.strftime('%A, %d %b %Y')}")
+
+
 def update_loop(icon: pystray.Icon) -> None:
-    """Refresh icon and tooltip only when the day changes."""
+    """Refresh icon and tooltip only when the day changes.
+
+    The menu is not touched here: its date line is a callable, which pystray
+    asks for each time the menu is opened, so it is never stale and never
+    needs pushing.
+    """
     while not icon.visible:
         time.sleep(1)
-    last_day = datetime.date.today()
+    last_day = today()
     while icon.visible:
         time.sleep(60)
-        today = datetime.date.today()
-        if today != last_day:
-            last_day = today
-            week = get_week_number()
-            icon.icon = create_icon_image(week)
+        day = today()
+        if day != last_day:
+            last_day = day
+            icon.icon = create_icon_image(get_week_number())
             icon.title = build_tooltip()
 
 
@@ -149,7 +179,7 @@ def _check_focus(win: tk.Toplevel, state: dict) -> None:
         state["win"] = None
 
 
-def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
+def _render(win: tk.Toplevel, state: dict, day: datetime.date) -> None:
     """(Re-)draw calendar contents into win."""
     for w in win.winfo_children():
         w.destroy()
@@ -174,7 +204,7 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
         if m < 1:
             m, y = 12, y - 1
         state["month"], state["year"] = m, y
-        _render(win, state, today)
+        _render(win, state, day)
         _reposition(win)
 
     def go_next():
@@ -182,12 +212,12 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
         if m > 12:
             m, y = 1, y + 1
         state["month"], state["year"] = m, y
-        _render(win, state, today)
+        _render(win, state, day)
         _reposition(win)
 
     def go_today():
-        state["year"], state["month"] = today.year, today.month
-        _render(win, state, today)
+        state["year"], state["month"] = day.year, day.month
+        _render(win, state, day)
         _reposition(win)
 
     btn_kw = dict(
@@ -228,7 +258,7 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
             font=("Segoe UI", 8), width=3, anchor="center",
         ).grid(row=0, column=col, padx=2, pady=(0, 4))
 
-    today_iso = today.isocalendar()
+    today_iso = day.isocalendar()
     cal   = calendar.Calendar(firstweekday=0)   # Monday first
     weeks = cal.monthdatescalendar(year, month)
 
@@ -249,9 +279,9 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
             width=3, anchor="center",
         ).grid(row=r, column=0, padx=2, pady=2)
 
-        for c, day in enumerate(week, 1):
-            is_today  = (day == today)
-            in_month  = (day.month == month)
+        for c, cell in enumerate(week, 1):
+            is_today  = (cell == day)
+            in_month  = (cell.month == month)
             is_wknd   = (c >= 6)
 
             if is_today:
@@ -264,7 +294,7 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
                 bg, fg, w = _BG, _NORMAL_FG, "normal"
 
             tk.Label(
-                grid_f, text=str(day.day),
+                grid_f, text=str(cell.day),
                 bg=bg, fg=fg, font=("Segoe UI", 9, w),
                 width=3, anchor="center",
             ).grid(row=r, column=c + 1, padx=2, pady=2)  # +1 to skip separator col
@@ -272,11 +302,11 @@ def _render(win: tk.Toplevel, state: dict, today: datetime.date) -> None:
     # ── Footer ───────────────────────────────────────────────────────────────
     tk.Frame(content, bg=_SEP_COL, height=1).pack(fill="x", pady=(10, 6))
 
-    doy = today.timetuple().tm_yday
-    iso = today.isocalendar()
+    doy = day.timetuple().tm_yday
+    iso = day.isocalendar()
     tk.Label(
         content,
-        text=f"{today.strftime('%d %b %Y')}  ·  Day {doy}  ·  Week {iso[1]}",
+        text=f"{day.strftime('%d %b %Y')}  ·  Day {doy}  ·  Week {iso[1]}",
         bg=_BG, fg=_NORMAL_FG, font=("Segoe UI", 9),
     ).pack()
 
@@ -293,8 +323,8 @@ def show_calendar(root: tk.Tk, state: dict) -> None:
             pass
         state["win"] = None
 
-    today = datetime.date.today()
-    state.update(year=today.year, month=today.month)
+    day = today()
+    state.update(year=day.year, month=day.month)
 
     win = tk.Toplevel(root)
     win.overrideredirect(True)
@@ -302,12 +332,35 @@ def show_calendar(root: tk.Tk, state: dict) -> None:
     win.attributes("-topmost", True)
     state["win"] = win
 
-    _render(win, state, today)
+    _render(win, state, day)
     _reposition(win)
 
     win.bind("<Escape>", lambda e: _close(state))
     win.bind("<FocusOut>", lambda e: win.after(150, lambda: _check_focus(win, state)))
     win.focus_force()
+
+
+# ── Menu ──────────────────────────────────────────────────────────────────────
+
+def build_menu(on_calendar, on_autostart, on_quit) -> pystray.Menu:
+    """The right-click menu, built from what it should do rather than from
+    what is in scope where it happens to be created — so it can be built in a
+    test without a tray, an icon or an event loop."""
+    return pystray.Menu(
+        pystray.MenuItem("Show Calendar", on_calendar, default=True),
+        # Callable, not a string: see `info_line`.
+        pystray.MenuItem(lambda item: info_line(), None, enabled=False),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem(
+            "Windows başladığında başlat",
+            on_autostart,
+            checked=lambda item: config.load_auto_start(),
+        ),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem(version.full(), None, enabled=False),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("Quit", on_quit),
+    )
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -328,11 +381,11 @@ def main() -> None:
 
     def quit_app(icon_arg=None, item=None):
         icon.stop()
+        # The popup is a window of its own and outlives the tray icon if
+        # nobody closes it, leaving a calendar on screen with nothing behind
+        # it and a process that will not end.
+        root.after(0, lambda: _close(cal_state))
         root.after(0, root.quit)
-
-    today     = datetime.date.today()
-    week_n    = today.isocalendar()[1]
-    info_text = f"Week {week_n} of {today.year}  |  {today.strftime('%A, %d %b %Y')}"
 
     def toggle_autostart(icon_arg=None, item=None):
         new_state = not config.load_auto_start()
@@ -345,18 +398,7 @@ def main() -> None:
                 f"Otomatik başlatma uygulanamadı:\n{exc}",
             )
 
-    icon.menu = pystray.Menu(
-        pystray.MenuItem("Show Calendar", toggle_calendar, default=True),
-        pystray.MenuItem(info_text, None, enabled=False),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem(
-            "Windows başladığında başlat",
-            toggle_autostart,
-            checked=lambda item: config.load_auto_start(),
-        ),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Quit", quit_app),
-    )
+    icon.menu = build_menu(toggle_calendar, toggle_autostart, quit_app)
 
     # pystray in background thread
     threading.Thread(target=icon.run, daemon=True).start()

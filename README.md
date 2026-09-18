@@ -11,10 +11,33 @@ A minimal Windows system tray app that shows the current ISO week number as the 
   Day 72 of year
   Week 11 of year
   ```
-- **Right-click** → the date, the auto-start toggle, the build it is,
-  and Quit. The date line is asked for each time the menu opens, so a
-  machine left on overnight does not open it on yesterday
+- **Right-click** → the date, the auto-start toggle, the **Language** submenu
+  (English / Türkçe), the build it is, and Quit. The date line is asked for
+  each time the menu opens, so a machine left on overnight does not open it
+  on yesterday
+- **Left-click** → a calendar with the week numbers down the side. Click any
+  day and the footer says what week it is, where it falls in the year, and
+  which dates that week covers; click the footer to copy the line
 - Icon updates automatically at midnight when the day changes
+
+The icon carries no background of its own. Windows draws it at 16px on the
+taskbar, and an opaque square is a dark blob on a light taskbar and a light
+one on a dark taskbar — so the number is drawn on nothing, in whichever colour
+`SystemUsesLightTheme` calls for, filling the square rather than sitting in a
+box inside it.
+
+## Languages
+
+English and Türkçe, from the tray menu, remembered between sessions. The
+English sentence is the translation key (`t("Quit")`, not `t("menu.quit")`),
+so a sentence with no entry falls back to the English rather than showing a
+key to a person — and `tests/test_language.py` reads every `t(...)` out of the
+source and fails if the Turkish catalogue has missed one or kept one the code
+no longer says.
+
+Month and weekday names come from a table, not `strftime`: `strftime` answers
+in the machine's locale, which is a different question from the language
+somebody picked in the menu.
 
 ## Requirements
 
@@ -46,8 +69,13 @@ pythonw week_number.py
 build.bat
 ```
 
-Produces `dist\WeekNumber.exe` via PyInstaller. It runs the tests first and
-refuses to build if they fail, then stamps the build.
+Produces `dist\WeekNumber\WeekNumber.exe` via PyInstaller. It runs the tests
+first and refuses to build if they fail, then stamps the build.
+
+**One-dir, not one-file.** Measured: the one-file bootloader spent 864–1119 ms
+unpacking 19 MB to a temp directory before Python even started — at every
+launch, and this app starts at every logon. Inno Setup packages the whole
+directory anyway.
 
 **No administrator manifest.** The app reads the date and draws a calendar;
 nothing it does needs elevation, and asking for it was not free — an
@@ -58,7 +86,7 @@ That is a different question.
 
 ## Build Installer
 
-1. Run `build.bat` to produce `dist\WeekNumber.exe`.
+1. Run `build.bat` to produce `dist\WeekNumber\` (a directory build).
 2. Open `installer.iss` in Inno Setup Compiler (or run `iscc installer.iss`).
 3. Output: `dist\WeekNumberSetup.exe`.
 
@@ -68,7 +96,7 @@ That is a different question.
 python -m pytest
 ```
 
-49 of them, and they never touch the real machine: `tests/conftest.py`
+80 of them, and they never touch the real machine: `tests/conftest.py`
 redirects `%APPDATA%` and the Startup folder for every test, because a suite
 that can turn the user's own auto-start off by being run is worse than no
 suite.
@@ -93,5 +121,8 @@ makes a manual run a check that the build is healthy.
 
 ## Configuration
 
-The auto-start preference is stored at
-`%APPDATA%\WeekNumber\config.json`.
+The auto-start preference and the chosen language are stored at
+`%APPDATA%\WeekNumber\config.json`. Every read of it falls back and every
+write is allowed to fail: a roaming profile is somewhere a JSON file genuinely
+turns up half-written, and a tray app that cannot read its settings still has
+to start.

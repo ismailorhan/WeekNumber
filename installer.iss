@@ -65,9 +65,13 @@ turkish.DesktopIconTask=&Masaüstü kısayolu oluştur
 Name: "desktopicon"; Description: "{cm:DesktopIconTask}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\WeekNumber.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "app_icon.ico";        DestDir: "{app}"; Flags: ignoreversion
-Source: "README.md";           DestDir: "{app}"; Flags: ignoreversion isreadme
+; The whole build directory, not one exe out of it. PyInstaller builds one-dir
+; because one-file spent the best part of a second unpacking itself before
+; Python started, at every logon -- and a one-dir build that ships only its
+; exe is an app that cannot start at all.
+Source: "dist\WeekNumber\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "app_icon.ico";      DestDir: "{app}"; Flags: ignoreversion
+Source: "README.md";         DestDir: "{app}"; Flags: ignoreversion isreadme
 
 [Icons]
 Name: "{group}\{#MyAppName}";            Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"

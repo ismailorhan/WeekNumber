@@ -27,6 +27,22 @@ def pyinstaller_flags(text):
     return {word for word in text[start:end].split() if word.startswith("--")}
 
 
+def test_the_build_is_one_dir():
+    """Measured: the one-file bootloader spent 864-1119 ms unpacking 19 MB to
+    a temp directory before Python started — every launch, and this app starts
+    at every logon."""
+    for recipe in (BUILD, WORKFLOW):
+        flags = pyinstaller_flags(recipe)
+        assert "--onedir" in flags
+        assert "--onefile" not in flags
+
+
+def test_the_installer_ships_the_whole_build_directory():
+    # A one-dir build that ships only its exe is an app that cannot start.
+    assert "recursesubdirs" in ISS
+    assert r'Source: "dist\WeekNumber.exe"' not in ISS
+
+
 def test_the_app_does_not_ask_for_administrator():
     """It reads the date and draws a calendar. Nothing it does needs elevation,
     and asking for it is not free: an admin-manifested exe in the Startup
@@ -80,6 +96,16 @@ def test_both_builds_stamp_a_version_resource():
     for recipe in (BUILD, WORKFLOW):
         assert any(flag.startswith("--version-file=")
                    for flag in pyinstaller_flags(recipe))
+
+
+def test_both_builds_bundle_the_translation_catalogues():
+    """The catalogues are reached by a computed import -- `i18n._load` builds
+    the module path from the language code -- so PyInstaller's static analysis
+    cannot see them. Without this the shipped app reads English whatever the
+    Language menu says, and every test still passes, because tests run from
+    source where the import works."""
+    for recipe in (BUILD, WORKFLOW):
+        assert "--collect-submodules" in pyinstaller_flags(recipe)
 
 
 def test_the_build_runs_the_tests_first():

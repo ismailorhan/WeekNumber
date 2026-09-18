@@ -54,7 +54,7 @@ echo === Building WeekNumber.exe ===
 py -m PyInstaller ^
     --noconfirm ^
     --clean ^
-    --onefile ^
+    --onedir ^
     --windowed ^
     --name WeekNumber ^
     --icon=app_icon.ico ^
@@ -62,6 +62,7 @@ py -m PyInstaller ^
     --hidden-import=win32com ^
     --hidden-import=win32com.client ^
     --hidden-import=pywintypes ^
+    --collect-submodules translations ^
     week_number.py
 
 set BUILD_FAILED=
@@ -77,5 +78,5 @@ if defined BUILD_FAILED (
 )
 
 echo.
-echo Build OK -^> dist\WeekNumber.exe
+echo Build OK -^> dist\WeekNumber\WeekNumber.exe
 endlocal

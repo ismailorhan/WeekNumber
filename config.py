@@ -78,3 +78,23 @@ def save_auto_start(enabled: bool) -> None:
         _save_raw(data)
     except OSError:
         pass                      # a read-only profile still runs
+
+
+def load_language() -> str:
+    """The language code to read in. English when nothing has been chosen.
+
+    Not the machine's locale: the person who installs this and the person who
+    reads it are not always the same, and the answer is the one everything is
+    written in. It is one menu item away.
+    """
+    import i18n
+    return i18n.use(str(_load_raw().get("language", i18n.DEFAULT)))
+
+
+def save_language(code: str) -> None:
+    data = _load_raw()
+    data["language"] = str(code)
+    try:
+        _save_raw(data)
+    except OSError:
+        pass

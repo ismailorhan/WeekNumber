@@ -48,18 +48,20 @@ jobs:
       - name: Stamp the build
         run: python stamp_version.py
 
-      # One-file is deliberate here where ShooApp is one-dir: this app is a
-      # few MB, so the unpack at launch is not noticeable, and a single exe is
-      # what the installer copies.
+      # One-dir, not one-file. Measured: the one-file bootloader spent
+      # 864-1119 ms unpacking 19 MB to a temp directory before Python started,
+      # on every launch -- and this app starts at every logon. Inno Setup is
+      # packaging the whole directory anyway.
       - name: Build WeekNumber.exe
         run: >
           python -m PyInstaller
-          --noconfirm --clean --onefile --windowed
+          --noconfirm --clean --onedir --windowed
           --name WeekNumber --icon=app_icon.ico
           --version-file=version_info.txt
           --hidden-import=win32com
           --hidden-import=win32com.client
           --hidden-import=pywintypes
+          --collect-submodules translations
           week_number.py
 
       # Back to what git has, before ISCC reads the tree. The stamp is already

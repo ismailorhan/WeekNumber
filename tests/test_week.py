@@ -85,11 +85,17 @@ def test_quitting_is_wired_to_what_it_was_given():
 # ---------------------------------------------------------------------------
 
 def test_the_icon_is_drawn_with_the_number_on_it():
+    """Something was drawn — checked by opacity, not by colour.
+
+    This used to look for a pure white pixel, from when the number was always
+    white on a painted square. It is now whichever colour the taskbar theme
+    calls for, and the test failed on a CI runner whose taskbar is light: the
+    digits were drawn in near-black and there was no white to find. The two
+    tests below are the ones about colour, and they pin the theme to ask.
+    """
     image = wn.create_icon_image(11)
     assert image.size == (64, 64)
-    # White text on a dark square: the white is the number, and an icon that
-    # rendered nothing would have none of it.
-    assert any(colour[:3] == (255, 255, 255)
+    assert any(colour[3] == 255
                for _count, colour in image.getcolors(maxcolors=4096))
 
 
